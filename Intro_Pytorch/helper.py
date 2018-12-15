@@ -93,6 +93,7 @@ def view_classify(img, ps, version="MNIST"):
     ax2.set_xlim(0, 1.1)
 
     plt.tight_layout()
+    plt.show()
 
 
 def sigmoid_activation(x):
