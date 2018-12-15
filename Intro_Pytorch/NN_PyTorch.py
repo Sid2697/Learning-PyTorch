@@ -59,30 +59,89 @@ from torch import nn
 
 
 class Network(nn.Module):
-
+    """
+    This class contains the methods and attributes to build a Neural Network
+    """
     def __init__(self):
         super().__init__()
 
-        # Inputs to hidden layer linear transformation
-        self.hidden = nn.Linear(784, 256)
+        # First hidden layer
+        self.hidden = nn.Linear(784, 128)
+        # Second hidden layer
+        self.hidden_1 = nn.Linear(128, 64)
         # Output layer
-        self.output = nn.Linear(256, 10)
+        self.output = nn.Linear(64, 10)
 
-        # Define sigmoid activation and softmax output
-        self.sigmoid = nn.Sigmoid()
         self.softmax = nn.Softmax(dim=1)
+        self.relu = nn.ReLU()
 
     def forward(self, x):
         """
-        This method passes the input tensor through each of our operation
+        This method is used to make 1 forward pass of the tensor x
         :param x: tensor to pass through all the layers
-        :return: output tensor from each layer
+        :return: output tensor passed through all the layers
         """
         x = self.hidden(x)
-        x = self.softmax(x)
+        x = self.relu(x)
+        x = self.hidden_1(x)
+        x = self.relu(x)
         x = self.output(x)
         x = self.softmax(x)
 
         return x
 
+
+# Way of checking weights and bias attached to a layer
+model = Network()
+print(model)
+print(model.hidden_1.weight.shape)
+print(model.hidden.weight)
+
+#Set biases to all zeros
+model.hidden.bias.data.fill_(0)
+print(model.hidden.bias)
+
+dataiter = iter(train_loader)
+images, labels = next(dataiter)
+
+images.resize_(64, 1, 28*28)
+
+# Forward pass through the network
+img_idx = 0
+ps = model.forward(images[img_idx, :])
+
+img = images[img_idx]
+view_classify(img.view(1, 28, 28), ps)
+
+# Hyperparameters for our network
+input_size = 784
+hidden_sizes = [128, 64]
+output_size = 10
+
+# Build a feed-forward network
+model = nn.Sequential(nn.Linear(input_size, hidden_sizes[0]),
+                      nn.ReLU(),
+                      nn.Linear(hidden_sizes[0], hidden_sizes[1]),
+                      nn.ReLU(),
+                      nn.Linear(hidden_sizes[1], output_size),
+                      nn.Softmax(dim=1))
+print(model)
+
+# Forward pass through the network and display output
+images, labels = next(iter(train_loader))
+images.resize_(images.shape[0], 1, 784)
+ps = model.forward(images[0,:])
+view_classify(images[0].view(1, 28, 28), ps)
+
+# Creating a network using ordered dict
+
+from collections import OrderedDict
+model = nn.Sequential(OrderedDict([
+                      ('fc1', nn.Linear(input_size, hidden_sizes[0])),
+                      ('relu1', nn.ReLU()),
+                      ('fc2', nn.Linear(hidden_sizes[0], hidden_sizes[1])),
+                      ('relu2', nn.ReLU()),
+                      ('output', nn.Linear(hidden_sizes[1], output_size)),
+                      ('softmax', nn.Softmax(dim=1))]))
+model
 
