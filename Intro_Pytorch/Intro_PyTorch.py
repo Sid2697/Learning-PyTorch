@@ -33,8 +33,8 @@ weights = weights.view(5, 1)
 ans_mat = sigmoid_activation(torch.mm(features, weights) + bias)
 print('Answer without matrix multiplication is {}, time taken is {}.'.format(ans_mat, time.time()-a))
 
-### Generate some data
-torch.manual_seed(7) # Set the random seed so things are predictable
+# Generate some data
+torch.manual_seed(7)  # Set the random seed so things are predictable
 
 # Features are 3 random normal variables
 features = torch.randn((1, 3))
@@ -53,7 +53,7 @@ W2 = torch.randn(n_hidden, n_output)
 B1 = torch.randn((1, n_hidden))
 B2 = torch.randn((1, n_output))
 
-## Your solution here
+# Your solution here
 a = sigmoid_activation(torch.mm(features, W1) + B1)
 b = sigmoid_activation(torch.mm(a, W2) + B2)
 print('Value of a small neural network is {}.'.format(b))
