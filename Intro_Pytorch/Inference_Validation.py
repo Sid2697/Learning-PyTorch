@@ -38,7 +38,7 @@ class Classifier(nn.Module):
         x = self.dropout(F.relu(self.fc2(x)))
         x = self.dropout(F.relu(self.fc3(x)))
 
-        x = F.log_softmax(self.fc4(x), dim=1)
+        x = F.log_softmax(self.dropout(self.fc4(x)), dim=1)
 
         return x
 
@@ -123,3 +123,8 @@ with torch.no_grad():
 ps = torch.exp(output)
 
 view_classify(img.view(1, 28, 28), ps, version='Fashion')
+
+print("Our model: \n\n", model, '\n')
+print("The state dict keys: \n\n", model.state_dict().keys())
+
+torch.save(model.state_dict(), 'checkpoint.pth')
