@@ -23,8 +23,10 @@ model = torch.nn.Sequential(torch.nn.Linear(784, 256),
                             torch.nn.LogSoftmax(dim=1))
 
 optimizer = optim.SGD(model.parameters(), lr=0.003)
+print(type(optimizer))
 
 crit = torch.nn.NLLLoss()
+print(crit)
 
 epoch = 5
 for _ in range(epoch):
