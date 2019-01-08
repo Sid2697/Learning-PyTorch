@@ -149,3 +149,42 @@ for epoch in range(1, n_epochs + 1):
                                                                                        valid_loss, valid_loss))
         torch.save(model.state_dict(), 'model_cifar_test.pt')
         valid_loss_min = valid_loss
+
+
+model.load_state_dict(torch.load('model_cifar_test.pt'))
+
+# tesing the trained network
+test_loss = 0.0
+class_correct = list(0. for i in range(10))
+class_total = list(0. for i in range(10))
+
+model.eval()
+
+for data, target in test_loader:
+    if train_on_gpu:
+        data, target =  data.cuda(), target.cuda()
+    output = model(data)
+    loss = criterion(output, target)
+    test_loss += loss.item()*data.size(0)
+    _, pred = torch.max(output, 1)
+    correct_tensor = pred.eq(target.data.view_as(pred))
+    correct = np.squeeze(correct_tensor.numpy()) if not train_on_gpu else np.squeeze(correct_tensor.cpu().numpy())
+    for i in range(batch_size):
+        label = target.data[i]
+        class_correct[label] += correct[i].item()
+        class_total[label] += 1
+
+# Average test loss
+test_loss = test_loss/len(test_loader.dataset)
+print('Test Loss: {:.6f}\n'.format(test_loss))
+
+for i in range(10):
+    if class_total[i] > 0:
+        print('Test accuracy of %5s: %2d%% (%2d/%2s)' % (classes[i],
+                                                         100 * class_correct[i] / class_total[i],
+                                                         np.sum(class_correct[i]), np.sum(class_total[i])))
+    else:
+        print('Test accuracy of %5s: N/A (no training examples'% (classes[i]))
+
+print('\nTest accuracy (overall): %2s%% (%2d/%2d)' % (100. * np.sum(class_correct)/np.sum(class_total),
+                                                     np.sum(class_correct), np.sum(class_total)))
