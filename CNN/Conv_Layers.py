@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 import torch.nn as nn
+import torch.optim as optim
 import matplotlib.pyplot as plt
 import torch.nn.functional as F
 from torchvision import datasets
@@ -62,6 +63,7 @@ def im_show(img):
 data_iter = iter(train_loader)
 images, labels = data_iter.next()
 images = images.numpy()
+print('Images shape', images.shape)
 
 
 fig = plt.figure(figsize=(25, 4))
@@ -76,12 +78,14 @@ class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
         self.conv1 = nn.Conv2d(3, 32, 3, padding=1)
-        self.conv2 = nn.Conv2d(32, 32, 3)
+        self.conv2 = nn.Conv2d(32, 32, 3, padding=1)
         self.pool = nn.MaxPool2d(2, 2)
-        self.conv3 = nn.Conv2d(32, 64, 3, padding=1)
-        self.conv4 = nn.Conv2d(64, 64, 3)
         self.dropout1 = nn.Dropout(p=0.25)
+        self.conv3 = nn.Conv2d(32, 64, 3, padding=1)
+        self.conv4 = nn.Conv2d(64, 64, 3, padding=1)
         self.dropout2 = nn.Dropout(p=0.5)
+        self.flat1 = nn.Linear(64*8*8, 512)
+        self.flat2 = nn.Linear(512, 10)
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
@@ -90,5 +94,58 @@ class Net(nn.Module):
         x = F.relu(self.conv3(x))
         x = self.pool(self.conv4(x))
         x = self.dropout2(x)
-        # TODO: Add the flatten layer and rest feed forward layers
+        x = x.view(-1, 64*8*8)
+        x = F.relu(self.flat1(x))
+        x = self.dropout1(x)
+        x = self.flat2(x)
         return x
+
+
+model = Net()
+print(model)
+
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.RMSprop(model.parameters(), lr=0.001, weight_decay=1e-6)
+
+# Train the network
+n_epochs = 5
+valid_loss_min = np.Inf
+
+for epoch in range(1, n_epochs + 1):
+    print('[INFO] Starting training...')
+
+    train_loss = 0.0
+    valid_loss = 0.0
+
+    model.train()
+    for data, target in train_loader:
+        if train_on_gpu:
+            data, target = data.cuda(), target.cuda()
+        optimizer.zero_grad()
+        output = model(data)
+        loss = criterion(output, target)
+        loss.backward()
+        optimizer.step()
+        train_loss += loss.item()*data.size(0)
+
+    # validation loop
+    model.eval()
+    for data, target in valid_loader:
+        if train_on_gpu:
+            data, target = data.cuda(), target.cuda()
+        output = model(data)
+        loss = criterion(output, target)
+        valid_loss += loss.item()*data.size(0)
+
+    # calculate average losses
+    train_loss = train_loss/len(train_loader.dataset)
+    valid_loss = valid_loss/len(valid_loader.dataset)
+
+    print('Epoch: {} \tTraining Loss: {:.6f} \tValidation Loss: {:.6f}'.format(epoch,
+                                                                               train_loss, valid_loss))
+    # Save model if validation loss has decreased
+    if valid_loss <= valid_loss_min:
+        print('Validation loss decreased ({:.6f} --> {:.6f}). Saving model ...'.format(valid_loss_min,
+                                                                                       valid_loss, valid_loss))
+        torch.save(model.state_dict(), 'model_cifar_test.pt')
+        valid_loss_min = valid_loss
