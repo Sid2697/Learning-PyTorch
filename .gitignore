@@ -3,3 +3,4 @@
 .DS_Store
 Cat_Dog_data/
 data/
+*.pt
