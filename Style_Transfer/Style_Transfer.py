@@ -139,12 +139,14 @@ style_weights = {'conv1_1': 1.,
 content_weight = 1  # alpha
 style_weight = 1e6  # beta
 
-show_every = 100
+show_every = 1
 
 # iteration hyperparameters
 optimizer = optim.Adam([target], lr=0.003)
 steps = 500
+print('Starting the main loop')
 for ii in range(1, steps+1):
+    print('Loop Number ', ii)
     target_features = get_features(target, vgg)
     content_loss = torch.mean((target_features['conv4_2'] - content_features['conv4_2'])**2)
 
